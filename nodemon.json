@@ -1,0 +1,8 @@
+{
+    "watch": ["src"],
+    "ignore": ["test/**/*.js"],
+    "execMap": {
+      "js": "node --inspect"
+    }
+  }
+  

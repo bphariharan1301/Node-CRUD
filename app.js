@@ -39,7 +39,7 @@ const getPgVersion = async () => {
 // Display All
 app.get('/api/tasks', async(req, res) => {
     try {
-        const { rows } = await pool.query('SELECT * FROM tasks')
+        const { rows } = await pool.query('SELECT * FROM tasks ORDER BY id ASC')
         res.json(rows) 
     } catch (error) {
         console.error('Error Querying items: ', error)
@@ -73,6 +73,12 @@ app.post('/api/tasks/delete', async(req, res) => {
     const { name, id } = req.body
     console.log(name, id) 
     try {
+        const result = await pool.query('SELECT * FROM tasks WHERE id=$1', [id])
+        if (result.rows.length === 0){
+            return res.status(404).json({
+                message:"Task not found!"
+            })
+        }
         await pool.query('DELETE FROM tasks WHERE id=$1', [id])
         res.status(201).json({
             message: 'Task Deleted Sucessfully'
@@ -82,6 +88,38 @@ app.post('/api/tasks/delete', async(req, res) => {
         console.error(`Error Occured while deleting the item: ${error}`)
         res.status(500).json({
             error: `Internal Server Error and Error is: ${error}`
+        })
+    }
+})
+
+// Update a Task
+app.post('/api/tasks/task', async(req, res) => {
+    let {name, new_id } = req.body
+    const id = req.query.id
+    console.log(name, new_id, id)
+    try {
+        const result = await pool.query('SELECT * FROM tasks WHERE id=$1', [id])
+        if (result.rows.length === 0){
+            return res.status(404).json({
+                message:"Task not found!"
+            })
+        }
+        await pool.query(`UPDATE tasks
+        SET name = $1, id = $2
+        WHERE id = $3`, [name, new_id, id])
+        console.log('After Update: ', result)
+        res.status(201).json({
+            message: 'Task Updated successfully',
+            task: {
+                name:name,
+                id:new_id
+            }
+        })
+    } catch (error) {
+        console.error('Error Occured while Deleting: ', error)
+        res.status(500).json({
+            message: 'Internal Server Error',
+            error: error
         })
     }
 })
